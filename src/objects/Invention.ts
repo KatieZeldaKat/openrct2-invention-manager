@@ -106,11 +106,13 @@ export class Invention {
     readonly name: string;
     readonly category: "scenery" | RideResearchCategory;
     readonly previewImage: number;
+    readonly researchItem: ResearchItem;
 
     constructor(item: ResearchItem) {
         let objectType: ObjectType = item.type === "ride" ? "ride" : "scenery_group";
         let itemObject = objectManager.getObject(objectType, item.object) as LoadedImageObject;
 
+        this.researchItem = item;
         this.identifier = itemObject.identifier;
         this.name = itemObject.name;
         this.category = item.category;

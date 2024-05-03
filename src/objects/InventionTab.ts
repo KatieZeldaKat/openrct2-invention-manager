@@ -54,9 +54,9 @@ function tabContent(
     return horizontal([
         vertical([
             label({ text: "{WHITE}Items pre-invented at start of game:", padding: 0 }),
-            createListView(inventionList.getInvented(category), lockSelection, selected),
+            createListView(inventionList.invented[category], lockSelection, selected),
             label({ text: "{WHITE}Items to invent during game:", padding: { top: 5 } }),
-            createListView(inventionList.getUninvented(category), lockSelection, selected),
+            createListView(inventionList.uninvented[category], lockSelection, selected),
         ]),
         createSidebar(category, selected),
     ]);
@@ -119,17 +119,23 @@ function createSidebar(
             }),
             createListButton(
                 "Shuffle",
-                store(inventionList.getUninvented(category).length == 0),
+                compute(inventionList.uninvented[category], (inventions) => {
+                    return inventions.length == 0;
+                }),
                 () => {},
             ),
             createListButton(
                 "Invent All",
-                store(inventionList.getUninvented(category).length == 0),
+                compute(inventionList.uninvented[category], (inventions) => {
+                    return inventions.length == 0;
+                }),
                 () => {},
             ),
             createListButton(
                 "Uninvent All",
-                store(inventionList.getInvented(category).length == 0),
+                compute(inventionList.invented[category], (inventions) => {
+                    return inventions.length == 0;
+                }),
                 () => {},
             ),
         ],
@@ -137,7 +143,7 @@ function createSidebar(
 }
 
 function createListView(
-    inventionList: Invention[],
+    inventions: WritableStore<Invention[]>,
     lockSelection: WritableStore<boolean>,
     selected: WritableStore<Invention | undefined>,
 ) {
@@ -146,15 +152,17 @@ function createListView(
         height: "50%",
         padding: 0,
         columns: [{ header: "Type" }, { header: "Object" }],
-        items: inventionList.map((invention) => [invention.type, invention.name]),
+        items: compute(inventions, (inventions) => {
+            return inventions.map((invention) => [invention.type, invention.name]);
+        }),
         onHighlight: (item) => {
             if (!lockSelection.get()) {
-                selected.set(inventionList[item]);
+                selected.set(inventions.get()[item]);
             }
         },
         onClick: (item) => {
             lockSelection.set(true);
-            selected.set(inventionList[item]);
+            selected.set(inventions.get()[item]);
         },
     });
 }
@@ -207,18 +215,13 @@ function createListButton(
 }
 
 function selectInvention(category: "all" | "scenery" | RideResearchCategory) {
-    let inventedItems = inventionList.getInvented(category);
-    let uninventedItems: Invention[];
     let selectedInvention: Invention | undefined;
-    if (inventedItems.length > 0) {
-        selectedInvention = inventedItems[0];
+    if (inventionList.invented[category].get().length > 0) {
+        selectedInvention = inventionList.invented[category].get()[0];
+    } else if (inventionList.uninvented[category].get().length > 0) {
+        selectedInvention = inventionList.uninvented[category].get()[0];
     } else {
-        uninventedItems = inventionList.getUninvented(category);
-        if (uninventedItems.length > 0) {
-            selectedInvention = uninventedItems[0];
-        } else {
-            selectedInvention = undefined;
-        }
+        selectedInvention = undefined;
     }
 
     return selectedInvention;
