@@ -35,13 +35,13 @@ const categoryMap: { [category: string]: string } = {
 
 export function inventionTab(category: "all" | "scenery" | RideResearchCategory) {
     const lockSelection = store(false);
-    const selected = store(inventionList.getInvented(category)[0]);
+    const selected = store(selectInvention(category));
     return tab({
         image: tabImageMap[category],
         content: [tabContent(category, lockSelection, selected)],
         onOpen: () => {
             lockSelection.set(false);
-            selected.set(inventionList.getInvented(category)[0]);
+            selected.set(selectInvention(category));
         },
     });
 }
@@ -49,10 +49,8 @@ export function inventionTab(category: "all" | "scenery" | RideResearchCategory)
 function tabContent(
     category: "all" | "scenery" | RideResearchCategory,
     lockSelection: WritableStore<boolean>,
-    selected: WritableStore<Invention>,
+    selected: WritableStore<Invention | undefined>,
 ) {
-    const image = compute(selected, (invention) => invention.previewImage);
-
     return horizontal([
         vertical([
             label({ text: "{WHITE}Items pre-invented at start of game:", padding: 0 }),
@@ -60,75 +58,88 @@ function tabContent(
             label({ text: "{WHITE}Items to invent during game:", padding: { top: 5 } }),
             createListView(inventionList.getUninvented(category), lockSelection, selected),
         ]),
-        vertical({
-            spacing: 0,
-            content: [
-                button({
-                    height: 110,
-                    width: 110,
-                    padding: { top: "20%", bottom: 5, left: 40 },
-                    image: image,
-                }),
-                label({
-                    text: compute(selected, (invention) => `{WHITE}${invention.type}`),
-                    width: 190,
-                    alignment: "centred",
-                    padding: { left: 2, bottom: 0 },
-                }),
-                label({
-                    text: compute(selected, (invention) => `{BLACK}${invention.name}`),
-                    width: 190,
-                    alignment: "centred",
-                    padding: { left: 2, top: 0 },
-                }),
-                label({
-                    text: compute(
-                        selected,
-                        (invention) =>
-                            `{WHITE}Research Group: {BLACK}${categoryMap[invention.category]}`,
-                    ),
-                    width: 190,
-                    padding: [8, 2],
-                }),
-                horizontal({
-                    padding: { left: 55 },
-                    content: [
-                        createSquareButton("arrow_up", () => {}),
-                        vertical({
-                            spacing: 1,
-                            padding: { bottom: 10 },
-                            content: [
-                                createArrowButton("▲", () => {}),
-                                createArrowButton("▼", () => {}),
-                            ],
-                        }),
-                        createSquareButton("arrow_down", () => {}),
-                    ],
-                }),
-                createListButton(
-                    "Shuffle",
-                    store(inventionList.getUninvented(category).length == 0),
-                    () => {},
-                ),
-                createListButton(
-                    "Invent All",
-                    store(inventionList.getUninvented(category).length == 0),
-                    () => {},
-                ),
-                createListButton(
-                    "Uninvent All",
-                    store(inventionList.getInvented(category).length == 0),
-                    () => {},
-                ),
-            ],
-        }),
+        createSidebar(category, selected),
     ]);
+}
+
+function createSidebar(
+    category: "all" | "scenery" | RideResearchCategory,
+    selected: WritableStore<Invention | undefined>,
+) {
+    const image = compute(selected, (invention) => invention?.previewImage ?? 0);
+    const visible = compute(selected, (invention) => (invention ? "visible" : "hidden"));
+    return vertical({
+        spacing: 0,
+        content: [
+            button({
+                height: 110,
+                width: 110,
+                padding: { top: "20%", bottom: 5, left: 40 },
+                image: image,
+                visibility: visible,
+            }),
+            label({
+                text: compute(selected, (invention) => `{WHITE}${invention?.type ?? ""}`),
+                width: 190,
+                alignment: "centred",
+                padding: { left: 2, bottom: 0 },
+                visibility: visible,
+            }),
+            label({
+                text: compute(selected, (invention) => `{BLACK}${invention?.name ?? ""}`),
+                width: 190,
+                alignment: "centred",
+                padding: { left: 2, top: 0 },
+                visibility: visible,
+            }),
+            label({
+                text: compute(
+                    selected,
+                    (invention) =>
+                        `{WHITE}Research Group: {BLACK}${categoryMap[invention?.category ?? ""]}`,
+                ),
+                width: 190,
+                padding: [8, 2],
+                visibility: visible,
+            }),
+            horizontal({
+                padding: { left: 55 },
+                content: [
+                    createSquareButton("arrow_up", () => {}, selected),
+                    vertical({
+                        spacing: 1,
+                        padding: { bottom: 10 },
+                        content: [
+                            createArrowButton("▲", () => {}),
+                            createArrowButton("▼", () => {}),
+                        ],
+                    }),
+                    createSquareButton("arrow_down", () => {}, selected),
+                ],
+            }),
+            createListButton(
+                "Shuffle",
+                store(inventionList.getUninvented(category).length == 0),
+                () => {},
+            ),
+            createListButton(
+                "Invent All",
+                store(inventionList.getUninvented(category).length == 0),
+                () => {},
+            ),
+            createListButton(
+                "Uninvent All",
+                store(inventionList.getInvented(category).length == 0),
+                () => {},
+            ),
+        ],
+    });
 }
 
 function createListView(
     inventionList: Invention[],
     lockSelection: WritableStore<boolean>,
-    selected: WritableStore<Invention>,
+    selected: WritableStore<Invention | undefined>,
 ) {
     return listview({
         canSelect: true,
@@ -148,11 +159,23 @@ function createListView(
     });
 }
 
-function createSquareButton(image: number | IconName, onClick: () => void) {
+function createSquareButton(
+    image: number | IconName,
+    onClick: () => void,
+    selected: WritableStore<Invention | undefined>,
+) {
     return button({
         image: image,
         height: 25,
         width: 25,
+        disabled: compute(selected, (invention) => {
+            if (invention === undefined) {
+                return true;
+            }
+
+            //return false;
+            return true;
+        }),
         onClick: onClick,
     });
 }
