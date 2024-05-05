@@ -3,8 +3,9 @@
  * @param array The array to shuffle (modified by reference).
  * @param start The index of the first element to shuffle; by default the beginning of the array.
  * @param end The index after the last element to shuffle; by default the length of the array.
+ * @returns A reference to the same array; the parameter array is shuffled in place.
  */
-export function shuffle<T>(array: T[], start?: number, end?: number) {
+export function shuffle<T>(array: T[], start?: number, end?: number): T[] {
     start = start ?? 0;
     end = end ?? array.length;
 
@@ -16,6 +17,8 @@ export function shuffle<T>(array: T[], start?: number, end?: number) {
         array[index] = array[chosenIndex];
         array[chosenIndex] = tempItem;
     }
+
+    return array;
 }
 
 /**

@@ -1,15 +1,17 @@
-import { Invention } from "./Invention";
-import * as inventionList from "../objects/InventionList";
+import * as inventions from "../helpers/inventions";
+import { Invention } from "../objects/Invention";
+import { shuffle } from "../helpers/shuffle";
 import {
+    LayoutDirection,
+    WritableStore,
+    store,
+    compute,
+    tab,
     horizontal,
     vertical,
     listview,
-    button,
-    store,
-    WritableStore,
     label,
-    compute,
-    tab,
+    button,
 } from "openrct2-flexui";
 
 const tabImageMap: { [category: string]: number | ImageAnimation } = {
@@ -17,7 +19,7 @@ const tabImageMap: { [category: string]: number | ImageAnimation } = {
     transport: { frameBase: 5537, frameCount: 5, frameDuration: 4 },
     gentle: { frameBase: 5542, frameCount: 4, frameDuration: 8 },
     rollercoaster: { frameBase: 5546, frameCount: 5, frameDuration: 2 },
-    thrill: 5562, // Needs custom animation, as ImageAnimation doesn't plug-and-play
+    thrill: 5562, // ImageAnimation doesn't work; unsure if possible to animate manually
     water: { frameBase: 5551, frameCount: 6, frameDuration: 4 },
     shop: { frameBase: 5530, frameCount: 7, frameDuration: 4 },
     scenery: 5459,
@@ -35,13 +37,15 @@ const categoryMap: { [category: string]: string } = {
 
 export function inventionTab(category: "all" | "scenery" | RideResearchCategory) {
     const lockSelection = store(false);
-    const selected = store(selectInvention(category));
+    const selected = store<Invention | undefined>();
     return tab({
         image: tabImageMap[category],
-        content: [tabContent(category, lockSelection, selected)],
+        direction: LayoutDirection.Horizontal,
+        content: tabContent(category, lockSelection, selected),
         onOpen: () => {
+            inventions.load();
             lockSelection.set(false);
-            selected.set(selectInvention(category));
+            selected.set(undefined);
         },
     });
 }
@@ -51,15 +55,18 @@ function tabContent(
     lockSelection: WritableStore<boolean>,
     selected: WritableStore<Invention | undefined>,
 ) {
-    return horizontal([
-        vertical([
-            label({ text: "{WHITE}Items pre-invented at start of game:", padding: 0 }),
-            createListView(inventionList.invented[category], lockSelection, selected),
-            label({ text: "{WHITE}Items to invent during game:", padding: { top: 5 } }),
-            createListView(inventionList.uninvented[category], lockSelection, selected),
-        ]),
+    return [
+        vertical({
+            spacing: 1,
+            content: [
+                label({ text: "{WHITE}Items pre-invented at start of game:", padding: 0 }),
+                createListView(category, true, lockSelection, selected),
+                label({ text: "{WHITE}Items to invent during game:", padding: { top: 5 } }),
+                createListView(category, false, lockSelection, selected),
+            ],
+        }),
         createSidebar(category, selected),
-    ]);
+    ];
 }
 
 function createSidebar(
@@ -105,7 +112,7 @@ function createSidebar(
             horizontal({
                 padding: { left: 55 },
                 content: [
-                    createSquareButton("arrow_up", () => {}, selected),
+                    createSquareButton("arrow_up", selected, () => {}),
                     vertical({
                         spacing: 1,
                         padding: { bottom: 10 },
@@ -114,63 +121,63 @@ function createSidebar(
                             createArrowButton("▼", () => {}),
                         ],
                     }),
-                    createSquareButton("arrow_down", () => {}, selected),
+                    createSquareButton("arrow_down", selected, () => {}),
                 ],
             }),
-            createListButton(
-                "Shuffle",
-                compute(inventionList.uninvented[category], (inventions) => {
-                    return inventions.length == 0;
-                }),
-                () => {},
-            ),
-            createListButton(
-                "Invent All",
-                compute(inventionList.uninvented[category], (inventions) => {
-                    return inventions.length == 0;
-                }),
-                () => {},
-            ),
-            createListButton(
-                "Uninvent All",
-                compute(inventionList.invented[category], (inventions) => {
-                    return inventions.length == 0;
-                }),
-                () => {},
-            ),
+            createListButton("Shuffle", category, false, () => {
+                const shuffled = shuffle(inventions.get(category, false));
+                inventions.update(shuffled);
+            }),
+            createListButton("Invent All", category, false, () => {
+                const uninvented = inventions.get(category, false);
+                uninvented.forEach((invention) => (invention.invented = true));
+                inventions.update(uninvented);
+            }),
+            createListButton("Uninvent All", category, true, () => {
+                const invented = inventions.get(category, true);
+                invented.forEach((invention) => (invention.invented = false));
+                inventions.update(invented);
+            }),
         ],
     });
 }
 
 function createListView(
-    inventions: WritableStore<Invention[]>,
+    category: "all" | "scenery" | RideResearchCategory,
+    invented: boolean,
     lockSelection: WritableStore<boolean>,
     selected: WritableStore<Invention | undefined>,
 ) {
+    const computedInventions = inventions.computeInventions(
+        category,
+        invented,
+        (inventions) => inventions,
+    );
+
     return listview({
-        canSelect: true,
+        canSelect: false, //true,
         height: "50%",
         padding: 0,
         columns: [{ header: "Type" }, { header: "Object" }],
-        items: compute(inventions, (inventions) => {
+        items: compute(computedInventions, (inventions) => {
             return inventions.map((invention) => [invention.type, invention.name]);
         }),
         onHighlight: (item) => {
             if (!lockSelection.get()) {
-                selected.set(inventions.get()[item]);
+                selected.set(computedInventions.get()[item]);
             }
         },
-        onClick: (item) => {
+        /*onClick: (item) => {
             lockSelection.set(true);
-            selected.set(inventions.get()[item]);
-        },
+            selected.set(computedInventions.get()[item]);
+        },*/
     });
 }
 
 function createSquareButton(
     image: number | IconName,
-    onClick: () => void,
     selected: WritableStore<Invention | undefined>,
+    onClick: () => void,
 ) {
     return button({
         image: image,
@@ -201,7 +208,8 @@ function createArrowButton(text: string, onClick: () => void) {
 
 function createListButton(
     text: string,
-    disabled: WritableStore<boolean>,
+    category: "all" | "scenery" | RideResearchCategory,
+    invented: boolean,
     onClick: () => void,
 ) {
     return button({
@@ -209,20 +217,9 @@ function createListButton(
         height: 15,
         width: 170,
         padding: [1, 10],
-        disabled: disabled,
+        disabled: inventions.computeInventions(category, invented, (inventions) => {
+            return inventions.length == 0;
+        }),
         onClick: onClick,
     });
-}
-
-function selectInvention(category: "all" | "scenery" | RideResearchCategory) {
-    let selectedInvention: Invention | undefined;
-    if (inventionList.invented[category].get().length > 0) {
-        selectedInvention = inventionList.invented[category].get()[0];
-    } else if (inventionList.uninvented[category].get().length > 0) {
-        selectedInvention = inventionList.uninvented[category].get()[0];
-    } else {
-        selectedInvention = undefined;
-    }
-
-    return selectedInvention;
 }

@@ -1,3 +1,4 @@
+import * as inventionList from "./helpers/inventions.js";
 import * as window from "./window/window.js";
 
 export function startup() {
@@ -5,6 +6,10 @@ export function startup() {
         return;
     }
 
+    // Subscribe to invention list changes
+    inventionList.initialize();
+
+    // Create window
     window.initialize();
     ui.registerMenuItem("Invention Manager", () => window.openWindow());
 }

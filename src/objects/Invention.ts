@@ -108,7 +108,9 @@ export class Invention {
     readonly previewImage: number;
     readonly researchItem: ResearchItem;
 
-    constructor(item: ResearchItem) {
+    invented: boolean;
+
+    constructor(item: ResearchItem, invented: boolean) {
         let objectType: ObjectType = item.type === "ride" ? "ride" : "scenery_group";
         let itemObject = objectManager.getObject(objectType, item.object) as LoadedImageObject;
 
@@ -118,11 +120,17 @@ export class Invention {
         this.category = item.category;
         this.previewImage = itemObject.baseImageId;
         this.type =
-            item.type === "ride"
-                ? rideTypes[(item as RideResearchItem).rideType]
-                : "Scenery Group";
+            item.type === "ride" ? rideTypes[(item as RideResearchItem).rideType] : "Scenery Group";
+
+        this.invented = invented;
     }
 
+    /**
+     * A comparison method to use for sorting `Invention` items.
+     * @param first The first invention to compare.
+     * @param second The second invention to compare.
+     * @returns `> 0` if `first` < `second`, `> 0` if `first` > `second`, `0` if they are the same.
+     */
     public static compare(first: Invention, second: Invention) {
         if (first.category !== second.category) {
             return categoryOrder[first.category] - categoryOrder[second.category];
