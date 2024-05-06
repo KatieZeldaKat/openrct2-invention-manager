@@ -112,7 +112,7 @@ function createSidebar(
             horizontal({
                 padding: { left: 55 },
                 content: [
-                    createSquareButton("arrow_up", selected, () => {}),
+                    createSquareButton("arrow_up", false, selected),
                     vertical({
                         spacing: 1,
                         padding: { bottom: 10 },
@@ -121,22 +121,22 @@ function createSidebar(
                             createArrowButton("▼", () => {}),
                         ],
                     }),
-                    createSquareButton("arrow_down", selected, () => {}),
+                    createSquareButton("arrow_down", true, selected),
                 ],
             }),
             createListButton("Shuffle", category, false, () => {
                 const shuffled = shuffle(inventions.get(category, false));
-                inventions.update(shuffled);
+                inventions.update(...shuffled);
             }),
             createListButton("Invent All", category, false, () => {
                 const uninvented = inventions.get(category, false);
                 uninvented.forEach((invention) => (invention.invented = true));
-                inventions.update(uninvented);
+                inventions.update(...uninvented);
             }),
             createListButton("Uninvent All", category, true, () => {
                 const invented = inventions.get(category, true);
                 invented.forEach((invention) => (invention.invented = false));
-                inventions.update(invented);
+                inventions.update(...invented);
             }),
         ],
     });
@@ -176,22 +176,26 @@ function createListView(
 
 function createSquareButton(
     image: number | IconName,
+    invented: boolean,
     selected: WritableStore<Invention | undefined>,
-    onClick: () => void,
 ) {
     return button({
         image: image,
         height: 25,
         width: 25,
-        disabled: compute(selected, (invention) => {
-            if (invention === undefined) {
-                return true;
-            }
+        disabled: compute(
+            selected,
+            (invention) => invention === undefined || invention.invented !== invented,
+        ),
+        onClick: () => {
+            const selectedInvention = selected.get() as Invention;
+            selectedInvention.invented = !selectedInvention.invented;
+            inventions.update(selectedInvention);
 
-            //return false;
-            return true;
-        }),
-        onClick: onClick,
+            // Update selection so arrows are correct
+            selected.set(undefined);
+            selected.set(selectedInvention);
+        },
     });
 }
 

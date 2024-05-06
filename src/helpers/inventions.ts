@@ -20,18 +20,18 @@ const categorizedInventions: {
 
 export function initialize() {
     inventions.subscribe((inventions) => {
-        const inventedList = inventions
+        const invented = inventions
             .filter((invention) => invention.invented)
             .sort(Invention.compare);
-        const uninventedList = inventions.filter((invention) => !invention.invented);
+        const uninvented = inventions.filter((invention) => !invention.invented);
 
         categories.concat("all").forEach((category) => {
-            categorizedInventions[category].true.set(filterCategory(inventedList, category));
-            categorizedInventions[category].false.set(filterCategory(uninventedList, category));
+            categorizedInventions[category].true.set(filterCategory(invented, category));
+            categorizedInventions[category].false.set(filterCategory(uninvented, category));
         });
 
-        park.research.inventedItems = inventedList.map((invention) => invention.researchItem);
-        park.research.uninventedItems = uninventedList.map((invention) => invention.researchItem);
+        park.research.uninventedItems = uninvented.map((invention) => invention.researchItem);
+        park.research.inventedItems = invented.map((invention) => invention.researchItem);
     });
 
     // Ensure newly researched items get updated
@@ -44,10 +44,10 @@ export function initialize() {
  * and/or adding new objects to the park.
  */
 export function load() {
-    let invented = park.research.inventedItems
+    const invented = park.research.inventedItems
         .map((item) => new Invention(item, true))
         .sort(Invention.compare);
-    let uninvented = park.research.uninventedItems.map((item) => {
+    const uninvented = park.research.uninventedItems.map((item) => {
         return new Invention(item, false);
     });
 
@@ -83,7 +83,7 @@ export function computeInventions<T>(
  * Updates invention data to pass to UI elements.
  * @param updated A list of inventions that have been updated and/or reordered.
  */
-export function update(updated: Invention[]) {
+export function update(...updated: Invention[]) {
     // Get where all the inventions already exist in the array
     const inventionsCopy = inventions.get().concat();
     const indicies = updated
