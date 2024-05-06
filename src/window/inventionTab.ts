@@ -117,8 +117,8 @@ function createSidebar(
                         spacing: 1,
                         padding: { bottom: 10 },
                         content: [
-                            createArrowButton("▲", () => {}),
-                            createArrowButton("▼", () => {}),
+                            createArrowButton("▲", true, category, selected),
+                            createArrowButton("▼", false, category, selected),
                         ],
                     }),
                     createSquareButton("arrow_down", true, selected),
@@ -199,14 +199,43 @@ function createSquareButton(
     });
 }
 
-function createArrowButton(text: string, onClick: () => void) {
+function createArrowButton(
+    text: string,
+    top: boolean,
+    category: "all" | "scenery" | RideResearchCategory,
+    selected: WritableStore<Invention | undefined>,
+) {
     return button({
         text: text,
         height: 12,
         width: 25,
         padding: 0,
-        disabled: true,
-        onClick: onClick,
+        disabled: compute(selected, (invention) => {
+            if (invention === undefined || invention.invented === true) {
+                return true;
+            }
+            const inventionList = inventions.get(category, invention.invented);
+            const index = inventionList.indexOf(invention);
+            if (top) {
+                return index == 0;
+            } else {
+                return index == inventionList.length - 1;
+            }
+        }),
+        onClick: () => {
+            const invention = selected.get() as Invention;
+            const inventionList = inventions.get(category, invention.invented);
+            const index = inventionList.indexOf(invention);
+            const swapIndex = top ? index - 1 : index + 1;
+
+            if (top) {
+                inventions.update(invention, inventionList[swapIndex]);
+            } else {
+                inventions.update(inventionList[swapIndex], invention);
+            }
+
+            selected.set(inventions.get(category, invention.invented)[swapIndex]);
+        },
     });
 }
 

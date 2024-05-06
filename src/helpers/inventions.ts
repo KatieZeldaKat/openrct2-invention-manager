@@ -33,9 +33,6 @@ export function initialize() {
         park.research.uninventedItems = uninvented.map((invention) => invention.researchItem);
         park.research.inventedItems = invented.map((invention) => invention.researchItem);
     });
-
-    // Ensure newly researched items get updated
-    context.subscribe("interval.day", load);
 }
 
 /**
