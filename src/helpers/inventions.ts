@@ -2,7 +2,15 @@ import { WritableStore, compute, store } from "openrct2-flexui";
 import { Invention } from "../objects/Invention";
 import { indexOf } from "./search";
 
-const categories = ["transport", "gentle", "rollercoaster", "thrill", "water", "shop", "scenery"];
+export const categories = [
+    "transport",
+    "gentle",
+    "rollercoaster",
+    "thrill",
+    "water",
+    "shop",
+    "scenery",
+];
 
 const inventions: WritableStore<Invention[]> = store([]);
 const categorizedInventions: {

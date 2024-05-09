@@ -1,3 +1,4 @@
+import { categories } from "../helpers/inventions";
 import { inventionTab } from "./inventionTab";
 import * as flex from "openrct2-flexui";
 
@@ -13,16 +14,9 @@ export function initialize() {
         colours: [flex.Colour.LightPurple, flex.Colour.Grey, flex.Colour.Grey],
         onOpen: () => (isWindowOpen = true),
         onClose: () => (isWindowOpen = false),
-        tabs: [
-            inventionTab("all"),
-            inventionTab("transport"),
-            inventionTab("gentle"),
-            inventionTab("rollercoaster"),
-            inventionTab("thrill"),
-            inventionTab("water"),
-            inventionTab("shop"),
-            inventionTab("scenery"),
-        ],
+        tabs: ["all"]
+            .concat(categories)
+            .map((category) => inventionTab(category as "all" | "scenery" | RideResearchCategory)),
     });
 }
 

@@ -125,8 +125,36 @@ function createSidebar(
                 ],
             }),
             createListButton("Shuffle", category, false, () => {
-                const shuffled = shuffle(inventions.get(category, false));
-                inventions.update(...shuffled);
+                if (category === "all") {
+                    const shuffledCategories: ("scenery" | RideResearchCategory)[] = [];
+                    const uninventedReversed: { [category: string]: Invention[] } = {};
+
+                    // Cache the uninvented items in a reversed list
+                    // and track how many exist in each category
+                    inventions.categories.forEach((value) => {
+                        const category = value as "scenery" | RideResearchCategory;
+                        uninventedReversed[category] = inventions.get(category, false).reverse();
+                        const length = uninventedReversed[category].length;
+                        for (let iterator = 0; iterator < length; iterator++) {
+                            shuffledCategories.push(category);
+                        }
+                    });
+
+                    shuffle(shuffledCategories);
+
+                    // Each category is shuffled, so the order of each individual
+                    // category can be preserved while shuffling them around
+                    const shuffledInventions: Invention[] = [];
+                    shuffledCategories.forEach((category) => {
+                        const invention = uninventedReversed[category].pop() as Invention;
+                        shuffledInventions.push(invention);
+                    });
+
+                    inventions.update(...shuffledInventions);
+                } else {
+                    const shuffled = shuffle(inventions.get(category, false));
+                    inventions.update(...shuffled);
+                }
             }),
             createListButton("Invent All", category, false, () => {
                 const uninvented = inventions.get(category, false);
