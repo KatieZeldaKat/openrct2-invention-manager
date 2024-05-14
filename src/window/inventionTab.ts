@@ -36,15 +36,13 @@ const categoryMap: { [category: string]: string } = {
 };
 
 export function inventionTab(category: "all" | "scenery" | RideResearchCategory) {
-    const lockSelection = store(false);
     const selected = store<Invention | undefined>();
     return tab({
         image: tabImageMap[category],
         direction: LayoutDirection.Horizontal,
-        content: tabContent(category, lockSelection, selected),
+        content: tabContent(category, selected),
         onOpen: () => {
             inventions.load();
-            lockSelection.set(false);
             selected.set(undefined);
         },
     });
@@ -52,7 +50,6 @@ export function inventionTab(category: "all" | "scenery" | RideResearchCategory)
 
 function tabContent(
     category: "all" | "scenery" | RideResearchCategory,
-    lockSelection: WritableStore<boolean>,
     selected: WritableStore<Invention | undefined>,
 ) {
     return [
@@ -60,9 +57,9 @@ function tabContent(
             spacing: 1,
             content: [
                 label({ text: "{WHITE}Items pre-invented at start of game:", padding: 0 }),
-                createListView(category, true, lockSelection, selected),
+                createListView(category, selected, true),
                 label({ text: "{WHITE}Items to invent during game:", padding: { top: 5 } }),
-                createListView(category, false, lockSelection, selected),
+                createListView(category, selected, false),
             ],
         }),
         createSidebar(category, selected),
@@ -112,16 +109,16 @@ function createSidebar(
             horizontal({
                 padding: { left: 55 },
                 content: [
-                    createSquareButton("arrow_up", false, selected),
+                    createSwapButton("arrow_up", selected, false),
                     vertical({
                         spacing: 1,
                         padding: { bottom: 10 },
                         content: [
-                            createArrowButton("▲", true, category, selected),
-                            createArrowButton("▼", false, category, selected),
+                            createShiftButton("▲", category, selected, true),
+                            createShiftButton("▼", category, selected, false),
                         ],
                     }),
-                    createSquareButton("arrow_down", true, selected),
+                    createSwapButton("arrow_down", selected, true),
                 ],
             }),
             createListButton("Shuffle", category, false, () => {
@@ -172,9 +169,8 @@ function createSidebar(
 
 function createListView(
     category: "all" | "scenery" | RideResearchCategory,
-    invented: boolean,
-    lockSelection: WritableStore<boolean>,
     selected: WritableStore<Invention | undefined>,
+    invented: boolean,
 ) {
     const computedInventions = inventions.computeInventions(
         category,
@@ -183,7 +179,7 @@ function createListView(
     );
 
     return listview({
-        canSelect: false, //true,
+        canSelect: false,
         height: "50%",
         padding: 0,
         columns: [{ header: "Type" }, { header: "Object" }],
@@ -191,21 +187,16 @@ function createListView(
             return inventions.map((invention) => [invention.type, invention.name]);
         }),
         onHighlight: (item) => {
-            if (!lockSelection.get()) {
-                selected.set(computedInventions.get()[item]);
-            }
-        },
-        /*onClick: (item) => {
-            lockSelection.set(true);
             selected.set(computedInventions.get()[item]);
-        },*/
+        },
     });
 }
 
-function createSquareButton(
+// Swaps inventions between being invented and uninvented
+function createSwapButton(
     image: number | IconName,
-    invented: boolean,
     selected: WritableStore<Invention | undefined>,
+    invented: boolean,
 ) {
     return button({
         image: image,
@@ -227,11 +218,12 @@ function createSquareButton(
     });
 }
 
-function createArrowButton(
+// Shifts inventions up and down in their respective list
+function createShiftButton(
     text: string,
-    top: boolean,
     category: "all" | "scenery" | RideResearchCategory,
     selected: WritableStore<Invention | undefined>,
+    top: boolean,
 ) {
     return button({
         text: text,
@@ -262,6 +254,8 @@ function createArrowButton(
                 inventions.update(inventionList[swapIndex], invention);
             }
 
+            // Update selection so arrows are correct
+            selected.set(undefined);
             selected.set(inventions.get(category, invention.invented)[swapIndex]);
         },
     });

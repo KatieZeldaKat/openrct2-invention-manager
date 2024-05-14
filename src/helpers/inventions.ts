@@ -26,6 +26,8 @@ const categorizedInventions: {
     scenery: { true: store([]), false: store([]) },
 };
 
+const inventionObjects: { [identifier: string]: Invention } = {};
+
 export function initialize() {
     inventions.subscribe((inventions) => {
         const invented = inventions
@@ -38,8 +40,15 @@ export function initialize() {
             categorizedInventions[category].false.set(filterCategory(uninvented, category));
         });
 
-        park.research.uninventedItems = uninvented.map((invention) => invention.researchItem);
-        park.research.inventedItems = invented.map((invention) => invention.researchItem);
+        const inventedResearch = invented.map((invention) => invention.researchItem);
+        const uninventedResearch = uninvented.map((invention) => invention.researchItem);
+
+        // Must be set twice due to a race condition. If an object is removed from the list
+        // before being added to the other, it creates a duplicate entry. Setting twice ensures
+        // this object is removed fully from one list and added to the other.
+        park.research.inventedItems = inventedResearch;
+        park.research.uninventedItems = uninventedResearch;
+        park.research.inventedItems = inventedResearch;
     });
 }
 
@@ -50,10 +59,10 @@ export function initialize() {
  */
 export function load() {
     const invented = park.research.inventedItems
-        .map((item) => new Invention(item, true))
+        .map((item) => getInvention(item, true))
         .sort(Invention.compare);
     const uninvented = park.research.uninventedItems.map((item) => {
-        return new Invention(item, false);
+        return getInvention(item, false);
     });
 
     inventions.set(invented.concat(uninvented));
@@ -110,7 +119,15 @@ export function update(...updated: Invention[]) {
     load();
 }
 
-function filterCategory(list: Invention[], category: string) {
+function getInvention(researchItem: ResearchItem, invented: boolean): Invention {
+    const type: ObjectType = researchItem.category === "scenery" ? "scenery_group" : "ride";
+    const identifier = objectManager.getObject(type, researchItem.object).identifier;
+    inventionObjects[identifier] ??= new Invention(researchItem, invented);
+
+    return inventionObjects[identifier];
+}
+
+function filterCategory(list: Invention[], category: string): Invention[] {
     return list.filter(
         category === "all" ? (_) => true : (invention) => invention.category === category,
     );
