@@ -12,7 +12,18 @@ import {
     listview,
     label,
     button,
+    twoway,
 } from "openrct2-flexui";
+
+/**
+ * The invention currently selected to be shown as a preview.
+ */
+const selected = store<Invention | undefined>();
+
+/**
+ * The invention that has last been clicked on to interact with (not just hovered).
+ */
+const locked = store<Invention | undefined>();
 
 const tabImageMap: { [category: string]: number | ImageAnimation } = {
     all: { frameBase: 5327, frameCount: 8, frameDuration: 2 },
@@ -36,40 +47,38 @@ const categoryMap: { [category: string]: string } = {
 };
 
 export function inventionTab(category: "all" | "scenery" | RideResearchCategory) {
-    const selected = store<Invention | undefined>();
     return tab({
         image: tabImageMap[category],
         direction: LayoutDirection.Horizontal,
-        content: tabContent(category, selected),
+        content: tabContent(category),
         onOpen: () => {
             inventions.load();
             selected.set(undefined);
+            locked.set(undefined);
         },
     });
 }
 
-function tabContent(
-    category: "all" | "scenery" | RideResearchCategory,
-    selected: WritableStore<Invention | undefined>,
-) {
-    return [
-        vertical({
-            spacing: 1,
-            content: [
-                label({ text: "{WHITE}Items pre-invented at start of game:", padding: 0 }),
-                createListView(category, selected, true),
-                label({ text: "{WHITE}Items to invent during game:", padding: { top: 5 } }),
-                createListView(category, selected, false),
-            ],
-        }),
-        createSidebar(category, selected),
-    ];
+function tabContent(category: "all" | "scenery" | RideResearchCategory) {
+    return [createLists(category), createSidebar(category)];
 }
 
-function createSidebar(
-    category: "all" | "scenery" | RideResearchCategory,
-    selected: WritableStore<Invention | undefined>,
-) {
+function createLists(category: "all" | "scenery" | RideResearchCategory) {
+    const invented = inventions.computeInventions(category, true, (inventions) => inventions);
+    const uninvented = inventions.computeInventions(category, false, (inventions) => inventions);
+
+    return vertical({
+        spacing: 1,
+        content: [
+            label({ text: "{WHITE}Available inventions:", padding: 0 }),
+            createListView(invented),
+            label({ text: "{WHITE}To be invented:", padding: { top: 5 } }),
+            createListView(uninvented),
+        ],
+    });
+}
+
+function createSidebar(category: "all" | "scenery" | RideResearchCategory) {
     const image = compute(selected, (invention) => invention?.previewImage ?? 0);
     const visible = compute(selected, (invention) => (invention ? "visible" : "hidden"));
     return vertical({
@@ -109,16 +118,16 @@ function createSidebar(
             horizontal({
                 padding: { left: 55 },
                 content: [
-                    createSwapButton("arrow_up", selected, false),
+                    createSwapButton("arrow_up", false),
                     vertical({
                         spacing: 1,
                         padding: { bottom: 10 },
                         content: [
-                            createShiftButton("▲", category, selected, true),
-                            createShiftButton("▼", category, selected, false),
+                            createShiftButton(category, true),
+                            createShiftButton(category, false),
                         ],
                     }),
-                    createSwapButton("arrow_down", selected, true),
+                    createSwapButton("arrow_down", true),
                 ],
             }),
             createListButton("Shuffle", category, false, () => {
@@ -167,70 +176,101 @@ function createSidebar(
     });
 }
 
-function createListView(
-    category: "all" | "scenery" | RideResearchCategory,
-    selected: WritableStore<Invention | undefined>,
-    invented: boolean,
-) {
-    const computedInventions = inventions.computeInventions(
-        category,
-        invented,
-        (inventions) => inventions,
-    );
+/**
+ * A clickable list of inventions.
+ */
+function createListView(inventionList: WritableStore<Invention[]>) {
+    const lockedSelection = twoway(store<RowColumn | null>(null));
+    locked.subscribe((invention) => {
+        if (invention === undefined) {
+            lockedSelection.twoway.set(null);
+            return;
+        }
+
+        const row = inventionList.get().indexOf(invention);
+        if (row < 0) {
+            lockedSelection.twoway.set(null);
+        } else {
+            lockedSelection.twoway.set({ row: row, column: 0 });
+        }
+    });
+
+    inventionList.subscribe((inventions) => {
+        if (locked.get() !== undefined) {
+            const index = inventions.indexOf(locked.get() as Invention);
+            if (
+                lockedSelection.twoway.get() !== null &&
+                index !== lockedSelection.twoway.get()?.row
+            ) {
+                // Update invention selection
+                const invention = locked.get();
+                locked.set(undefined);
+                locked.set(invention);
+            }
+        }
+    });
 
     return listview({
-        canSelect: false,
+        canSelect: true,
         height: "50%",
         padding: 0,
         columns: [{ header: "Type" }, { header: "Object" }],
-        items: compute(computedInventions, (inventions) => {
+        items: compute(inventionList, (inventions) => {
             return inventions.map((invention) => [invention.type, invention.name]);
         }),
+        selectedCell: lockedSelection,
         onHighlight: (item) => {
-            selected.set(computedInventions.get()[item]);
+            if (locked.get() === undefined) {
+                selected.set(inventionList.get()[item]);
+            }
+        },
+        onClick: (item) => {
+            if (locked.get() === inventionList.get()[item]) {
+                locked.set(undefined);
+                return;
+            }
+
+            const invention = inventionList.get()[item];
+            selected.set(invention);
+            locked.set(invention);
         },
     });
 }
 
-// Swaps inventions between being invented and uninvented
-function createSwapButton(
-    image: number | IconName,
-    selected: WritableStore<Invention | undefined>,
-    invented: boolean,
-) {
+/**
+ * A button to swap inventions between being invented and uninvented.
+ */
+function createSwapButton(image: number | IconName, invented: boolean) {
     return button({
         image: image,
         height: 25,
         width: 25,
         disabled: compute(
-            selected,
+            locked,
             (invention) => invention === undefined || invention.invented !== invented,
         ),
         onClick: () => {
-            const selectedInvention = selected.get() as Invention;
+            const selectedInvention = locked.get() as Invention;
             selectedInvention.invented = !selectedInvention.invented;
             inventions.update(selectedInvention);
 
             // Update selection so arrows are correct
-            selected.set(undefined);
-            selected.set(selectedInvention);
+            locked.set(undefined);
+            locked.set(selectedInvention);
         },
     });
 }
 
-// Shifts inventions up and down in their respective list
-function createShiftButton(
-    text: string,
-    category: "all" | "scenery" | RideResearchCategory,
-    selected: WritableStore<Invention | undefined>,
-    top: boolean,
-) {
+/**
+ * A button that shifts inventions up or down in their respective list.
+ */
+function createShiftButton(category: "all" | "scenery" | RideResearchCategory, top: boolean) {
     return button({
-        text: text,
+        text: top ? "▲" : "▼",
         height: 12,
         width: 25,
         padding: 0,
-        disabled: compute(selected, (invention) => {
+        disabled: compute(locked, (invention) => {
             if (invention === undefined || invention.invented === true) {
                 return true;
             }
@@ -243,7 +283,7 @@ function createShiftButton(
             }
         }),
         onClick: () => {
-            const invention = selected.get() as Invention;
+            const invention = locked.get() as Invention;
             const inventionList = inventions.get(category, invention.invented);
             const index = inventionList.indexOf(invention);
             const swapIndex = top ? index - 1 : index + 1;
@@ -255,12 +295,15 @@ function createShiftButton(
             }
 
             // Update selection so arrows are correct
-            selected.set(undefined);
-            selected.set(inventions.get(category, invention.invented)[swapIndex]);
+            locked.set(undefined);
+            locked.set(inventions.get(category, invention.invented)[swapIndex]);
         },
     });
 }
 
+/**
+ * A misc. wide button with text to be displayed in a list.
+ */
 function createListButton(
     text: string,
     category: "all" | "scenery" | RideResearchCategory,

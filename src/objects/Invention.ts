@@ -108,9 +108,9 @@ export class Invention {
     readonly previewImage: number;
     readonly researchItem: ResearchItem;
 
-    invented: boolean;
+    invented: boolean = false;
 
-    constructor(item: ResearchItem, invented: boolean) {
+    constructor(item: ResearchItem) {
         let objectType: ObjectType = item.type === "ride" ? "ride" : "scenery_group";
         let itemObject = objectManager.getObject(objectType, item.object) as LoadedImageObject;
 
@@ -121,8 +121,6 @@ export class Invention {
         this.previewImage = itemObject.baseImageId;
         this.type =
             item.type === "ride" ? rideTypes[(item as RideResearchItem).rideType] : "Scenery Group";
-
-        this.invented = invented;
     }
 
     /**

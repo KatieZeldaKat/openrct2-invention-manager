@@ -1,4 +1,4 @@
-import * as inventionList from "./helpers/inventions.js";
+import * as inventions from "./helpers/inventions.js";
 import * as window from "./window/window.js";
 
 export function startup() {
@@ -6,8 +6,8 @@ export function startup() {
         return;
     }
 
-    // Subscribe to invention list changes
-    inventionList.initialize();
+    // Initialize invention tracking
+    inventions.initialize();
 
     // Create window
     window.initialize();

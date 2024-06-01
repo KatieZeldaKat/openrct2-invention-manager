@@ -50,6 +50,8 @@ export function initialize() {
         park.research.uninventedItems = uninventedResearch;
         park.research.inventedItems = inventedResearch;
     });
+
+    context.subscribe("interval.day", load);
 }
 
 /**
@@ -122,7 +124,9 @@ export function update(...updated: Invention[]) {
 function getInvention(researchItem: ResearchItem, invented: boolean): Invention {
     const type: ObjectType = researchItem.category === "scenery" ? "scenery_group" : "ride";
     const identifier = objectManager.getObject(type, researchItem.object).identifier;
-    inventionObjects[identifier] ??= new Invention(researchItem, invented);
+
+    inventionObjects[identifier] ??= new Invention(researchItem);
+    inventionObjects[identifier].invented = invented;
 
     return inventionObjects[identifier];
 }
