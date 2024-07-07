@@ -1,6 +1,6 @@
 import { WritableStore, compute, store } from "openrct2-flexui";
 import { Invention } from "../objects/Invention";
-import { indexOf } from "./search";
+import { indexOf, sortLeastToGreatest } from "./arrayExtensions";
 
 export const categories = [
     "transport",
@@ -109,7 +109,7 @@ export function update(...updated: Invention[]) {
                 (invention) => invention.identifier === updatedInvention.identifier,
             ),
         )
-        .sort();
+        .sort(sortLeastToGreatest);
 
     // Keep the order of the updated array by iterating through the inventionsCopy sequentially
     updated.forEach((updatedInvention, index) => {

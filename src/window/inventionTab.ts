@@ -1,6 +1,6 @@
 import * as inventions from "../helpers/inventions";
 import { Invention } from "../objects/Invention";
-import { shuffle } from "../helpers/shuffle";
+import { shuffle } from "../helpers/arrayExtensions";
 import {
     LayoutDirection,
     WritableStore,
