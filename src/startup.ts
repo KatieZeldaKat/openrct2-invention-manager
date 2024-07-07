@@ -1,22 +1,15 @@
-// @ts-ignore
-import * as info from "./info.js";
+import * as inventions from "./helpers/inventions.js";
+import * as window from "./window/window.js";
 
+export function startup() {
+    if (network.mode !== "none" || typeof ui === "undefined") {
+        return;
+    }
 
-export function startup()
-{
-	// Write code here that should happen on startup of the plugin.
-	console.log("Hello world!");
+    // Initialize invention tracking
+    inventions.initialize();
 
-	// Register a menu item under the map icon:
-	if (typeof ui !== "undefined")
-	{
-		ui.registerMenuItem(info.name, () => onClickMenuItem());
-	}
-}
-
-
-function onClickMenuItem()
-{
-	// Write code here that should happen when the player clicks the menu item under the map icon.
-	console.log("Clicked menu item");
+    // Create window
+    window.initialize();
+    ui.registerMenuItem("Invention Manager", () => window.openWindow());
 }

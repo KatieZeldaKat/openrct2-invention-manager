@@ -1,114 +1,79 @@
-# OpenRCT2 TypeScript Plugin Template
+# Inventions Manager for OpenRCT2
 
-A simple and minimal template for OpenRCT2 plugins using TypeScript based on [Basssiiie's OpenRCT2-Simple-Typescript-Template](https://github.com/Basssiiie/OpenRCT2-Simple-Typescript-Template) with a few changes to file content and structure.
+An alternative to the built-in inventions list found under the cheat menu. Adds the ability to filter inventions by research group, move around inventions while preserving other inventions' order, and more! Designed for ease of use when creating scenarios.
 
-Also supports:
-- Automatic plugin reload in OpenRCT2 (hot reload)
-- Out of the box minification to improve file sizes
-- Support for external NPM packages (like FlexUI)
+![Invention Manager startup window](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/startup.png?raw=true)
 
-## How to start
+## Getting the plugin
 
-1. Install latest version of [Node](https://nodejs.org/en/) and make sure to include NPM and enable the "Add to PATH" option during installation.
-2. Use the green "Use this template" button in the top right corner of this page, or download the project to a location of your choice on your PC.
-3. Open a terminal or command prompt.
-4. Use `cd` to change your current directory to the root folder of this project.
-5. Run `npm ci` to install the project's dependencies.
-6. Find `openrct2.d.ts` TypeScript API declaration file in OpenRCT2 files. copy it to `./lib/` folder.
-   - This file can usually be found in the [OpenRCT2 installation directory](#openrct2-installation-directory).
-   - Alternatively you can download the file from Github [here](https://raw.githubusercontent.com/OpenRCT2/OpenRCT2/develop/distribution/openrct2.d.ts).
-   - Another option is to make a symbolic link instead of copying the file, which will keep the file up to date whenever you install new versions of OpenRCT2.
-7. In `./src/info.js`, change plugin info, such as name and author, to your liking.
+Download the `.js` file from the [latest release](https://github.com/KatieZeldaKat/openrct2-invention-manager/releases/latest) and place it in the "plugin" folder. This can be found by opening OpenRCT2 and selecting "Open custom content folder" under the toolbox in the main menu.
 
 ---
 
-## Commands
+## Selecting an invention
 
-The template comes with several terminal commands to make developing plugins easier.
+If you hover over any item in the "available inventions" or "to be invented" lists, you will see a preview image and information about it. Simply click one to select it. Once selected, hovering over other inventions will no longer update the preview. To deselect an invention, click on it again. You may also click on another invention to select that instead.
 
-`npm run build`
+![Selecting and deselecting inventions](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/select-invention.gif?raw=true)
 
-Creates a release build of your plugin. This version is optimized for sharing with others, using Terser to make the file as small as possible. By default, the plugin will be outputted to `./dist/`.
+## Research group tabs
 
-`npm run build:dev`
+There are seven different research groups items are invented in:
 
-Creates a develop build of your plugin. This version is not optimized for sharing, but easier to read in case you want to see the outputted Javascript. By default, the plugin will be outputted in the plugin folder of the default [OpenRCT2 user directory](#openrct2-user-directory).
+1. Transport Rides
+2. Gentle Rides
+3. Roller Coasters
+4. Thrill Rides
+5. Water Rides
+6. Shops & Stalls
+7. Scenery & Theming
 
-`npm start` or `npm run start`
+This plugin organizes these research groups into tabs you can click on to filter which inventions are shown. There is also an "All" tab (designated by the red conical flask), which displays all inventions at once, similarly to the built-in inventions list.
 
-Will start a script that will automatically run `npm run build:dev` every time you make a change to any Typescript or Javascript file inside the `./src/` folder.
+![Cycle through research group tabs](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/research-group-tabs.gif?raw=true)
 
-### Output paths
+## Moving inventions around
 
-The output paths can be changed in `rollup.config.js`, specifically in the `getOutput()` method.
+The built-in invention list allows for click-and-drag to move around inventions. Plugin windows cannot do this as of yet. As such, there are buttons you can use to move them around and between lists.
 
----
+### Make invented/uninvented
 
-## Access game logs
+To make an invented item move to the "to be invented" list, simply select it and click the big red down arrow.
 
-When your plugin is not loading properly, it may be useful to be able to read the logs of the game to see if there are any errors. Furthermore, if you use the `console.log` function, the resulting logs can be read here as well.
+To make an item that is yet to be invented move to the "available inventions" list, simply select it and click the big red up arrow.
 
-### Windows
+![Moving the Chip Shop up and down with the red arrows](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/chips-invent-uninvent.gif?raw=true)
 
-1. Navigate to the folder where [OpenRCT2 is installed](#openrct2-installation-directory).
-2. Launch the `openrct2.com` file located there (the MS-DOS application).
-	- If file extensions are hidden, make sure to [enable them](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01).
+There are also buttons which let you invent all items or uninvent all items. This only affects whatever tab you are in. For example, clicking either button in the tab for Thrill Rides will only affect this research category.
 
-### MacOS
+![Inventing and uninventing all Thrill Rides](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/invent-uninvent-all.gif?raw=true)
 
-1. Launch a terminal or another command-line prompt.
-2. Using the `cd` command, navigate to the folder where [OpenRCT2 is installed](#openrct2-installation-directory).
-3. Run `open OpenRCT2.app/Contents/MacOS/OpenRCT2` to launch OpenRCT2 with logging enabled.
+### Change invention order
 
-### Linux
+For simplicity, the "available inventions" list's order is locked. Inventions are grouped by research group, then sorted alphabetically. This was done to simplify searching for a given invention, as the order of invented items has no impact on gameplay.
 
-1. Launch a terminal or another command-line prompt.
-2. Using the `cd` command, navigate to the folder where [OpenRCT2 is installed](#openrct2-installation-directory).
-3. Run `./openrct2` to launch OpenRCT2 with logging enabled.
+As for inventions "to be invented", you have full control. After selecting an invention, use the small arrows to move the item up or down in the list.
 
----
+![Moving the Twist invention up and down](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/change-order.gif?raw=true)
 
-## Hot reload
+When in the "All" tab, moving inventions up and down will behave the same as the built-in inventions list. However, when in any of the other tabs, the inventions are modified differently. Say there are two "Shops & Stalls" to be invented: a Chip Shop and a Cash Machine. Note the positions in the overall list:
 
-This project supports the [OpenRCT2 hot reload feature](https://github.com/OpenRCT2/OpenRCT2/blob/master/distribution/scripting.md#writing-scripts) for development.
+![The "to be invented" list with the Chip Shop and Cash Machine highlighted, with other inventions between and around them](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/shops-stalls-before.png?raw=true)
 
-1. Navigate to your [OpenRCT2 user directory](#openrct2-user-directory) and open the `config.ini` file.
-2. Enable hot reload by setting `enable_hot_reloading = true` in the file.
-3. Run `npm start` in the directory of this project to start the hot reload server.
-4. Start the OpenRCT2 and load a save or start a new game.
-5. Each time you save any of the files in `./src/`, the server will compile `./src/registerPlugin.ts` and place compiled plugin file inside your local OpenRCT2 plugin directory.
-6. OpenRCT2 will notice file changes and it will reload the plugin.
+Now, going to the "Shops & Stalls" tab, we can swap the order these are invented in:
 
----
+![The Chip Shop is swapped to be invented after the Cash Machine](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/shops-stalls-swap.gif?raw=true)
 
-## Folders
+After we make this change, the Cash Machine is now set to be invented before the Chip Shop while preserving the rest of the invention order:
 
-### OpenRCT2 installation directory
+![The "to be invented" list again with Chip Shop and Cash Machine highlighted, but swapped in order from before](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/shops-stalls-after.png?raw=true)
 
-This is the directory where the game is installed.
+## Shuffle
 
-- **Windows:** usually `C:/Users/<USERNAME>/Documents/OpenRCT2/bin/` when using the launcher or `C:/Program Files/OpenRCT2/` when an installer was used.
-- **MacOS:** the folder where the `OpenRCT2.app` application file was placed.
-- **Linux:** depends on the distro, but likely either `/usr/share/openrct2` when installed through a package manager, or mounted in `/tmp` when using an AppImage.
+In every tab other than the "All" tab, shuffling behaves as expected. Upon clicking the button, all inventions "to be invented" will shuffle around into a random order. As mentioned before, the "available inventions" have a set order, and as such, they will not shuffle.
 
-### OpenRCT2 user directory
+![Shuffling the Roller Coasters tab](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/shuffle-rollercoasters.gif?raw=true)
 
-This is the directory where the game stores user data, like save games and plugins.
+Upon clicking the button in the "All" tab, the inventions are shuffled such that the order of inventions within the research groups are preserved. This can be useful to make a random order of inventions while still ensuring certain inventions are researched before others (like a Virginia Reel always being researched before a Multi-Dimensional Coaster).
 
-- **Windows:** usually `Documents/OpenRCT2/` or `C:/Users/<USERNAME>/Documents/OpenRCT2/`.
-- **MacOS:** usually `/Users/<USERNAME>/Library/Application Support/OpenRCT2/`. Note that `Library` is a hidden folder in your user directory, so by default it will not show up in Finder.
-- **Linux:** usually `/home/<USERNAME>/.config`, `$HOME/.config`, or where the environment variable `$XDG_CONFIG_HOME` points to if it's set.
-
-You can also open this folder from inside OpenRCT2, by selecting "Open custom content folder" in the dropdown under the red toolbox in the main menu.
-
----
-
-## Dependencies
-
-The following libraries and tools are used in this template:
-
-- **NodeJS** is the JavaScript engine used to develop and run code when the game is not running.
-- **NPM** is a library and package manager for JavasScript and TypeScript and can be used to install new packages and update existing packages in the project.
-- **TypeScript** is a expansion language to JavaScript that adds type checking when you are writing the code. It allows you to specify rules for how objects and values look like, so TypeScript can report back if your code follows these rules (instead of crashes or errors in-game).
-- **Rollup** bundles all source code, runs it through some plugins like TypeScript, and then outputs a single JavaScript plugin file.
-- **Nodemon** is the program that can watch a folder for changes and then trigger a specified action. It is used by `npm start` to watch the `./src/` folder and triggers `npm run build:dev` if any changes occur.
+![Shuffling the "All" tab and showing the preserved order of Roller Coasters](https://github.com/KatieZeldaKat/openrct2-invention-manager/blob/v1.0.0/docs/images/shuffle-all.gif?raw=true)
