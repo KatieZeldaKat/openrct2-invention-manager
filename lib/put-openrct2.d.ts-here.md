@@ -1,7 +1,3 @@
-Put the `openrct2.d.ts` file in this folder.
+Put the `openrct2.d.ts` file in this folder. Currently targeting API version 94 (v0.4.12):
 
-You can take it from a OpenRCT2 installation or download it from here:
-
-https://raw.githubusercontent.com/OpenRCT2/OpenRCT2/master/distribution/openrct2.d.ts
-
-For more information, please read the [README.md](../README.md).
+https://raw.githubusercontent.com/OpenRCT2/OpenRCT2/v0.4.12/distribution/openrct2.d.ts
