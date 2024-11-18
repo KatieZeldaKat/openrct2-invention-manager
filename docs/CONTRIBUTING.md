@@ -11,7 +11,7 @@ The instructions below are taken from [Basssiiie's Typescript Template](https://
 3. Open a terminal or command prompt.
 4. Use `cd` to change your current directory to the root folder of this project.
 5. Run `npm ci` to install the project's dependencies.
-6. Place `openrct2.d.ts` in the project's files [as described here](./lib/put-openrct2.d.ts-here.md).
+6. Place `openrct2.d.ts` in the project's files [as described here](../lib/put-openrct2.d.ts-here.md).
 
 ---
 
