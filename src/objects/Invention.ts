@@ -88,6 +88,7 @@ const rideTypes: { [rideType: number]: string } = {
     98: "Alpine Coaster",
     99: "Classic Wooden Roller Coaster",
     100: "Classic Stand-up Roller Coaster",
+    101: "LSM Launched Roller Coaster",
 };
 
 const categoryOrder: { [category: string]: number } = {
