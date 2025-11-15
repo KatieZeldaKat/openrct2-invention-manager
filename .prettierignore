@@ -1,2 +1,2 @@
-# Ignore markdown while issue is open: https://github.com/prettier/prettier/issues/5019
-*.md
+# Ignore GitHub workflows
+.github/workflows/*

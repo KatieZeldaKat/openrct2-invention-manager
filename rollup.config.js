@@ -10,7 +10,7 @@ const options = {
     /**
      * The filename of the output, taken from info.js
      */
-    filename: `${name}-v${version}.js`,
+    filename: `${name}.js`,
 
     /**
      * Determines in what build mode the plugin should be build. The default here takes
