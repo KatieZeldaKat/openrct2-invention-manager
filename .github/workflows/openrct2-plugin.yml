@@ -1,0 +1,39 @@
+name: OpenRCT2 Plugin
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch Dependencies
+        run: npm ci
+
+      - name: Check Formatting
+        run: npx prettier . --check
+  build:
+    name: Build
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch Dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload JS File
+        uses: actions/upload-artifact@v4
+        with:
+          path: dist/invention-manager.js
